@@ -1,0 +1,42 @@
+server:
+  port: 8080
+  error:
+    include-message: never
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USER}
+    password: ${DATABASE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+  jackson:
+    time-zone: UTC
+  mail:
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USER:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+management:
+  health:
+    mail:
+      enabled: ${EMAIL_ENABLED:false}
+medibook:
+  jwt-secret: ${JWT_SECRET}
+  frontend-origin: ${FRONTEND_ORIGIN}
+  cancellation-hours: ${CANCELLATION_HOURS:24}
+  timezone: ${TIMEZONE:Asia/Kolkata}
+  email:
+    enabled: ${EMAIL_ENABLED:false}
+    from: ${EMAIL_FROM:no-reply@medibook.local}
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html

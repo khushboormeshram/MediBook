@@ -1,0 +1,3 @@
+package com.medibook.controller;
+import com.medibook.entity.Notification;import com.medibook.repository.NotificationRepository;import org.springframework.security.access.prepost.PreAuthorize;import org.springframework.security.core.annotation.AuthenticationPrincipal;import org.springframework.web.bind.annotation.*;import java.util.List;
+@RestController @RequestMapping("/api/notifications") @PreAuthorize("isAuthenticated()") public class NotificationController {private final NotificationRepository repo;public NotificationController(NotificationRepository r){repo=r;}@GetMapping public List<Notification> mine(@AuthenticationPrincipal Long id){return repo.findTop50ByUserIdOrderByCreatedAtDesc(id);}}

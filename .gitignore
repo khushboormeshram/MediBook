@@ -1,0 +1,51 @@
+.env
+frontend/.env.local
+frontend/node_modules/
+frontend/dist/
+backend/target/
+.m2/
+.npm-cache/
+maven-settings.tmp.xml
+*.log
+
+# Markdown files must remain local per repository publishing requirements.
+**/*.md
+
+# Ignore environment-specific settings but keep documented example templates.
+**/.env*
+!**/.env.example
+
+# Generated dependencies, builds, coverage, and test output.
+**/node_modules/
+**/target/
+**/dist/
+**/build/
+coverage/
+**/coverage/
+*.class
+*.jar
+*.exec
+*.dump
+*.backup
+*.sql.gz
+*.sqlite
+*.sqlite3
+*.db
+
+# IDE and operating-system files.
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Local audit/tooling artifacts.
+.tmp*/
+.m2/
+.npm-cache/
+.docker-cli-temp/
+.gh-cli-check/
+backend/pom-no-jacoco.xml
+*.tmp
+*.temp
+*.log.*

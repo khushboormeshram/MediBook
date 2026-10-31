@@ -1,0 +1,7 @@
+package com.medibook.service;
+import com.medibook.entity.*;import com.medibook.repository.*;import org.springframework.scheduling.annotation.Scheduled;import org.springframework.stereotype.Service;import org.springframework.transaction.annotation.Transactional;import java.time.*;import java.util.List;
+@Service public class ReminderService {
+ private final AppointmentRepository appointments;private final NotificationRepository notifications;private final UserRepository users;private final EmailNotifier email;
+ public ReminderService(AppointmentRepository a,NotificationRepository n,UserRepository users,EmailNotifier email){appointments=a;notifications=n;this.users=users;this.email=email;}
+ @Scheduled(fixedDelay=900000) @Transactional public void sendUpcomingReminders(){Instant now=Instant.now();List<Appointment> upcoming=appointments.findByStartAtBetweenAndStatusIn(now.plus(Duration.ofHours(23)),now.plus(Duration.ofHours(24)),List.of(AppointmentStatus.PENDING,AppointmentStatus.CONFIRMED));for(Appointment a:upcoming){String message="Appointment "+a.getId()+" is scheduled for "+a.getStartAt()+".";if(!notifications.existsByUserIdAndTitleAndMessageAndCreatedAtAfter(a.getPatientId(),"Appointment reminder",message,now.minus(Duration.ofDays(2)))){notifications.save(new Notification(a.getPatientId(),"Appointment reminder",message));users.findById(a.getPatientId()).ifPresent(u->email.send(u.getEmail(),"MediBook appointment reminder",message));}}}
+}

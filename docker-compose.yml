@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-medibook}
+      POSTGRES_USER: ${POSTGRES_USER:-medibook}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes: ["medibook-db:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-medibook} -d ${POSTGRES_DB:-medibook}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+  backend:
+    build: ./backend
+    ports: ["8081:8080"]
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-development}
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-medibook}
+      DATABASE_USER: ${POSTGRES_USER:-medibook}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5173}
+      CANCELLATION_HOURS: ${CANCELLATION_HOURS:-24}
+      TIMEZONE: ${TIMEZONE:-Asia/Kolkata}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      EMAIL_FROM: ${EMAIL_FROM:-no-reply@medibook.local}
+    depends_on:
+      postgres: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_TIMEZONE: ${TIMEZONE:-Asia/Kolkata}
+    ports: ["${APP_PORT:-5173}:80"]
+    depends_on:
+      backend: {condition: service_healthy}
+volumes:
+  medibook-db:

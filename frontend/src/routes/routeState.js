@@ -1,0 +1,1 @@
+export function routeState(pathname){return {isHome:pathname==='/',isDashboard:pathname.startsWith('/dashboard'),isDoctors:pathname==='/doctors',isSettings:pathname==='/settings',isKnown:['/','/dashboard','/doctors','/settings'].includes(pathname)}}

@@ -1,0 +1,3 @@
+package com.medibook.controller;
+import com.medibook.dto.AuthDtos.*; import com.medibook.service.AuthService; import jakarta.validation.Valid; import org.springframework.web.bind.annotation.*;
+@RestController @RequestMapping("/api/auth") public class AuthController {private final AuthService auth;public AuthController(AuthService auth){this.auth=auth;}@PostMapping("/register") public AuthResponse register(@Valid @RequestBody Register r){return auth.register(r);}@PostMapping("/login") public AuthResponse login(@Valid @RequestBody Login r){return auth.login(r);}@PostMapping("/logout") public java.util.Map<String,String> logout(){return java.util.Map.of("message","Logged out. Remove the bearer token from the client.");}}
