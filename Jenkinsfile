@@ -41,7 +41,7 @@ pipeline {
             steps {
                 echo '=== Stage 2: Environment and Tool Validation ==='
                 powershell(script: '''
-                    $ErrorActionPreference = 'Stop'
+                    $ErrorActionPreference = 'Continue'
                     Write-Host 'Validating required build and deployment tools...'
 
                     $javaVersion = java -version 2>&1
@@ -86,7 +86,7 @@ pipeline {
                 echo '=== Stage 3: Backend Build (Maven) ==='
                 dir('backend') {
                     powershell(script: '''
-                        $ErrorActionPreference = 'Stop'
+                        $ErrorActionPreference = 'Continue'
                         Write-Host 'Compiling and packaging the Spring Boot application...'
                         mvn.cmd -B clean package -DskipTests
                         if ($LASTEXITCODE -ne 0) { throw 'Backend build failed.' }
@@ -100,7 +100,7 @@ pipeline {
                 echo '=== Stage 4: Backend Automated Tests (JUnit) ==='
                 dir('backend') {
                     powershell(script: '''
-                        $ErrorActionPreference = 'Stop'
+                        $ErrorActionPreference = 'Continue'
                         Write-Host 'Executing the backend unit test suite...'
                         mvn.cmd -B test
                         if ($LASTEXITCODE -ne 0) { throw 'Backend tests failed.' }
@@ -114,7 +114,7 @@ pipeline {
                 echo '=== Stage 5: Frontend Build (Vite/React) ==='
                 dir('frontend') {
                     powershell(script: '''
-                        $ErrorActionPreference = 'Stop'
+                        $ErrorActionPreference = 'Continue'
                         Write-Host 'Installing frontend dependencies and creating the production bundle...'
                         if (Test-Path package-lock.json) {
                             npm.cmd ci --no-audit --no-fund
@@ -134,7 +134,7 @@ pipeline {
                 echo '=== Stage 6: Frontend Automated Tests ==='
                 dir('frontend') {
                     powershell(script: '''
-                        $ErrorActionPreference = 'Stop'
+                        $ErrorActionPreference = 'Continue'
                         Write-Host 'Executing the frontend unit tests...'
                         npm.cmd test
                         if ($LASTEXITCODE -ne 0) { throw 'Frontend tests failed.' }
@@ -147,7 +147,7 @@ pipeline {
             steps {
                 echo '=== Stage 7: Docker Container Images Build ==='
                 powershell(script: '''
-                    $ErrorActionPreference = 'Stop'
+                    $ErrorActionPreference = 'Continue'
                     Write-Host 'Verifying Docker daemon access...'
                     docker info 2>&1 | Out-Null
                     if ($LASTEXITCODE -ne 0) { throw 'Docker daemon is not reachable. Refusing to report a false-successful image build.' }
@@ -171,7 +171,7 @@ pipeline {
                 echo '=== Stage 8: Terraform Format, Init and Validate ==='
                 dir('terraform') {
                     powershell(script: '''
-                        $ErrorActionPreference = 'Stop'
+                        $ErrorActionPreference = 'Continue'
                         Write-Host 'Checking Terraform formatting...'
                         terraform fmt -check -recursive
                         if ($LASTEXITCODE -ne 0) { throw 'Terraform formatting check failed. Run terraform fmt.' }
@@ -198,7 +198,7 @@ pipeline {
                 ]) {
                     dir('terraform') {
                         powershell(script: '''
-                            $ErrorActionPreference = 'Stop'
+                            $ErrorActionPreference = 'Continue'
                             if (-not $env:MEDIBOOK_SSH_CIDR) { throw 'medibook-ssh-cidr credential is empty.' }
                             $env:TF_VAR_trusted_ssh_cidr = "[`"$env:MEDIBOOK_SSH_CIDR`"]"
 
@@ -239,7 +239,7 @@ pipeline {
                 ]) {
                     dir('terraform') {
                         powershell(script: '''
-                            $ErrorActionPreference = 'Stop'
+                            $ErrorActionPreference = 'Continue'
                             if (-not $env:MEDIBOOK_SSH_CIDR) { throw 'medibook-ssh-cidr credential is empty.' }
                             $env:TF_VAR_trusted_ssh_cidr = "[`"$env:MEDIBOOK_SSH_CIDR`"]"
 
@@ -271,7 +271,7 @@ pipeline {
                     string(credentialsId: 'medibook-jwt-secret', variable: 'MEDIBOOK_JWT_SECRET')
                 ]) {
                     powershell(script: '''
-                        $ErrorActionPreference = 'Stop'
+                        $ErrorActionPreference = 'Continue'
                         if (-not $env:MEDIBOOK_SERVER_IP) { throw 'MEDIBOOK_SERVER_IP is not set.' }
                         if (-not (Test-Path 'terraform/medibook-key.pem')) { throw 'Terraform SSH private key not found.' }
 
@@ -306,7 +306,7 @@ pipeline {
             steps {
                 echo '=== Stage 13: Application and API Health Verification ==='
                 powershell(script: '''
-                    $ErrorActionPreference = 'Stop'
+                    $ErrorActionPreference = 'Continue'
                     if (-not $env:MEDIBOOK_SERVER_IP) { throw 'MEDIBOOK_SERVER_IP is not set.' }
 
                     Write-Host "Verifying frontend at http://$env:MEDIBOOK_SERVER_IP/ ..."

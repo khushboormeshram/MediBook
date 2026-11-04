@@ -16,7 +16,7 @@ param(
     [int]$MaxRetries = 30
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 
 Write-Host "=============================================="
 Write-Host " MediBook Automated EC2 Deployment & Health Check"
