@@ -15,6 +15,8 @@ pipeline {
         MAVEN_OPTS = '-Dmaven.repo.local=C:\\Users\\khushboo\\.m2\\repository'
         NPM_CONFIG_CACHE = 'C:\\Users\\khushboo\\AppData\\Local\\npm-cache'
         DOCKER_HOST = 'npipe:////./pipe/docker_engine'
+        TF_IN_AUTOMATION = 'true'
+        TF_PLUGIN_CACHE_DIR = 'C:\\ProgramData\\Jenkins\\.jenkins\\cache\\terraform-plugins'
         AWS_DEFAULT_REGION = 'ap-south-1'
         AWS_EC2_METADATA_DISABLED = 'true'
         PROJECT_NAME = 'medibook'
