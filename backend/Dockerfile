@@ -10,4 +10,4 @@ COPY --from=build /app/target/medibook-api-1.0.0.jar app.jar
 USER medibook
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s CMD wget -q -O /dev/null http://localhost:8080/actuator/health || exit 1
-ENTRYPOINT ["java","-XX:MaxRAMPercentage=75.0","-jar","/app/app.jar"]
+ENTRYPOINT ["java","-XX:InitialRAMPercentage=20.0","-XX:MaxRAMPercentage=50.0","-XX:+UseSerialGC","-XX:MaxMetaspaceSize=256m","-jar","/app/app.jar"]

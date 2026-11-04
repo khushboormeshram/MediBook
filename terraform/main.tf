@@ -145,6 +145,21 @@ resource "aws_instance" "medibook_server" {
               systemctl start docker
               usermod -aG docker ubuntu
               
+              # Configure a persistent 2 GiB swap file.
+              # The t2.micro has 1 GiB RAM, and image builds run Maven/npm on this host,
+              # so swap prevents the OOM killer from terminating containers mid-deploy.
+              if [ ! -f /swapfile ]; then
+                fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
+              fi
+              chmod 600 /swapfile
+              mkswap /swapfile
+              swapon /swapfile
+              if ! grep -q '^/swapfile ' /etc/fstab; then
+                echo '/swapfile none swap sw 0 0' >> /etc/fstab
+              fi
+              sysctl -w vm.swappiness=10
+              echo 'vm.swappiness=10' > /etc/sysctl.d/99-medibook-swap.conf
+
               # Prepare deployment workspace
               mkdir -p /opt/medibook
               chown -R ubuntu:ubuntu /opt/medibook
