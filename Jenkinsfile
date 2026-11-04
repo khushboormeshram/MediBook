@@ -254,15 +254,9 @@ pipeline {
                         ''')
                     }
                 }
-                script {
-                    // Read the persisted output at workspace scope. Assigning env inside
-                    // withCredentials/dir did not survive into the deployment stage.
-                    env.MEDIBOOK_SERVER_IP = readFile('terraform/public_ip.txt').trim()
-                    if (!env.MEDIBOOK_SERVER_IP) {
-                        error 'Terraform did not expose a public IP for deployment.'
-                    }
-                    echo "Deployment target: ${env.MEDIBOOK_SERVER_IP}"
-                }
+                // The public IP is persisted to terraform/public_ip.txt by the apply
+                // step above. Deployment and verification stages read that file
+                // directly in PowerShell, avoiding cross-stage env handoff issues.
             }
         }
 
