@@ -252,13 +252,16 @@ pipeline {
                             Set-Content -Path public_ip.txt -Value $publicIp -Encoding ASCII
                             Write-Host "Provisioned MediBook EC2 public IP: $publicIp"
                         ''')
-                        script {
-                            env.MEDIBOOK_SERVER_IP = powershell(
-                                returnStdout: true,
-                                script: 'terraform output -raw public_ip'
-                            ).trim()
-                        }
                     }
+                }
+                script {
+                    // Read the persisted output at workspace scope. Assigning env inside
+                    // withCredentials/dir did not survive into the deployment stage.
+                    env.MEDIBOOK_SERVER_IP = readFile('terraform/public_ip.txt').trim()
+                    if (-not env.MEDIBOOK_SERVER_IP) {
+                        error 'Terraform did not expose a public IP for deployment.'
+                    }
+                    echo "Deployment target: ${env.MEDIBOOK_SERVER_IP}"
                 }
             }
         }
@@ -272,6 +275,9 @@ pipeline {
                 ]) {
                     powershell(script: '''
                         $ErrorActionPreference = 'Continue'
+                        if (-not $env:MEDIBOOK_SERVER_IP -and (Test-Path 'terraform/public_ip.txt')) {
+                            $env:MEDIBOOK_SERVER_IP = (Get-Content 'terraform/public_ip.txt' -Raw).Trim()
+                        }
                         if (-not $env:MEDIBOOK_SERVER_IP) { throw 'MEDIBOOK_SERVER_IP is not set.' }
                         if (-not (Test-Path 'terraform/medibook-key.pem')) { throw 'Terraform SSH private key not found.' }
 
@@ -307,6 +313,9 @@ pipeline {
                 echo '=== Stage 13: Application and API Health Verification ==='
                 powershell(script: '''
                     $ErrorActionPreference = 'Continue'
+                    if (-not $env:MEDIBOOK_SERVER_IP -and (Test-Path 'terraform/public_ip.txt')) {
+                        $env:MEDIBOOK_SERVER_IP = (Get-Content 'terraform/public_ip.txt' -Raw).Trim()
+                    }
                     if (-not $env:MEDIBOOK_SERVER_IP) { throw 'MEDIBOOK_SERVER_IP is not set.' }
 
                     Write-Host "Verifying frontend at http://$env:MEDIBOOK_SERVER_IP/ ..."
