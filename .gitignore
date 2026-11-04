@@ -49,3 +49,35 @@ backend/pom-no-jacoco.xml
 *.tmp
 *.temp
 *.log.*
+
+# Terraform and Infrastructure Automation artifacts
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+!**/terraform.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+tfplan
+*.tfplan
+terraform/terraform-plan.txt
+terraform/public_ip.txt
+
+# SSH and security credentials
+*.pem
+*.id_rsa
+*.key
+*.pub
+id_rsa*
+
+# Local assessment artefacts and previous submission bundles.
+submission/
+evidence/
+

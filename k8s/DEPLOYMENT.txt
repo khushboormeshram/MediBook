@@ -1,0 +1,92 @@
+MEDIBOOK KUBERNETES DEPLOYMENT
+==============================
+
+These manifests target the local Minikube demo cluster and build the existing Dockerfiles into local images. PostgreSQL uses its own PVC; it does not attach to or modify the Compose medibook-db volume. The development Spring profile applies the project's own sample-data migrations for the demo patient, administrator, two verified doctors, specialties, and availability. This profile and its sample accounts are for local demonstration only. For a shared/production cluster, use the production profile and provision real accounts through a secure bootstrap process.
+
+PREREQUISITES
+-------------
+
+- Docker Desktop with the desktop-linux context active.
+- Minikube and kubectl installed.
+- A default StorageClass in the cluster (standard in Minikube).
+
+CREATE THE KUBERNETES SECRET
+----------------------------
+
+Create a local secret source file outside the repository, for example:
+  $env:USERPROFILE\medibook-k8s-secrets.env
+
+It must contain DATABASE_USER, DATABASE_PASSWORD, and JWT_SECRET. JWT_SECRET must be at least 32 characters. Optional SMTP_USER and SMTP_PASSWORD keys may be added if email is enabled. Keep the file private and out of version control.
+
+  kubectl apply -f .\k8s\namespace.yaml
+  kubectl create secret generic medibook-secrets -n medibook `
+    --from-env-file=$env:USERPROFILE\medibook-k8s-secrets.env
+
+BUILD, LOAD, AND DEPLOY
+-----------------------
+
+Run from the repository root:
+
+  minikube start --driver=docker
+  docker build -t medibook-backend:k8s .\backend
+  docker build -t medibook-frontend:k8s-v2 .\frontend
+  minikube image load medibook-backend:k8s
+  minikube image load medibook-frontend:k8s-v2
+  kubectl apply -f .\k8s\namespace.yaml
+  kubectl apply -f .\k8s\configmap.yaml
+  kubectl apply -f .\k8s\postgres.yaml
+  kubectl rollout status statefulset/postgres -n medibook --timeout=180s
+  kubectl apply -f .\k8s\backend.yaml
+  kubectl apply -f .\k8s\frontend.yaml
+  kubectl rollout status deployment/backend -n medibook --timeout=240s
+  kubectl rollout status deployment/frontend -n medibook --timeout=120s
+
+Apply the namespace before creating the Secret. Reapplying namespace.yaml later leaves the existing Secret intact.
+
+ACCESS AND VERIFY
+-----------------
+
+Run this command and keep it open:
+  kubectl port-forward -n medibook service/frontend 5174:80
+
+Open http://localhost:5174. Nginx routes /api, /v3/api-docs, and /swagger-ui to the in-cluster backend Service. Check status with:
+
+  kubectl get pods,services,pvc -n medibook
+  Invoke-WebRequest http://localhost:5174/ -UseBasicParsing
+
+Actuator is not proxied by the frontend. In a second terminal:
+
+  kubectl port-forward -n medibook service/backend 8082:8080
+  Invoke-RestMethod http://localhost:8082/actuator/health
+
+For browser demonstration, use the development accounts documented in the root project README. The seeded patient can book an appointment from the doctor list; the seeded doctor and administrator accounts show their role dashboards.
+
+MANUAL BOOKING DEMONSTRATION
+---------------------------
+
+1. Keep the frontend port-forward running and open http://localhost:5174.
+2. Sign in with the documented development patient account.
+3. Open Doctors, choose View profile, select a date with open slots, then choose a time.
+4. Confirm the “Appointment booked” message, then open My appointments and verify the appointment is listed as Confirmed.
+
+SCREENSHOT CHECKLIST
+--------------------
+
+- Cluster resources: `kubectl get pods,services,pvc -n medibook -o wide`.
+- Frontend: browser at `http://localhost:5174/`.
+- Doctor listing: browser at `http://localhost:5174/doctors`.
+- Appointment booking: the doctor profile modal with date and available time slots, then the booking confirmation toast.
+- Patient appointment: browser at `http://localhost:5174/dashboard` after sign-in.
+- API docs: browser at `http://localhost:5174/swagger-ui/index.html`.
+- Readiness: with the backend port-forward running, `Invoke-RestMethod http://localhost:8082/actuator/health/readiness`.
+
+Inspect logs with:
+  kubectl logs -n medibook deployment/backend
+  kubectl logs -n medibook statefulset/postgres
+
+DATA AND CLEANUP
+----------------
+
+The postgres-data PVC is retained when Deployments or the namespace workloads are updated. Do not delete the PVC or namespace if its database contents must be kept. Back up the database before storage or migration operations. No cleanup command is included here.
+
+For a remote or shared cluster, replace the local image tags and imagePullPolicy: Never with private-registry images, provide a managed StorageClass, and provision Secrets through the cluster's secret-management process.

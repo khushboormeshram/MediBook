@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: medibook-config
+  namespace: medibook
+data:
+  SPRING_PROFILES_ACTIVE: development
+  DATABASE_URL: jdbc:postgresql://postgres:5432/medibook
+  FRONTEND_ORIGIN: http://localhost:5174
+  CANCELLATION_HOURS: "24"
+  TIMEZONE: Asia/Kolkata
+  SMTP_HOST: ""
+  SMTP_PORT: "587"
+  EMAIL_ENABLED: "false"
+  EMAIL_FROM: no-reply@medibook.local
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"

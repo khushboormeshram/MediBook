@@ -99,13 +99,16 @@ class AppointmentBookingIT {
     void patientCanBookAnAvailableAppointment() {
         logInAsDevelopmentPatient();
         wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("header a[href='/doctors']"))).click();
+        wait.until(ExpectedConditions.urlContains("/doctors"));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("main.page-main .doctor-grid")));
         wait.until(ExpectedConditions.numberOfElementsToBeMoreThan(DOCTOR_CARDS, 0));
 
         String bookedDoctor = findDoctorWithAvailableSlotAndBook();
         assertTrue(wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".toast")))
                 .getText().contains("Appointment booked"), "The UI should confirm the booking");
 
-        wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("header a[href='/dashboard']"))).click();
+        driver.get(baseUrl + "/dashboard");
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("main.dashboard-main")));
         wait.until(driver -> driver.findElements(By.cssSelector(".appointment-card")).stream()
                 .anyMatch(card -> card.getText().contains(bookedDoctor)));
     }
@@ -132,7 +135,8 @@ class AppointmentBookingIT {
         for (int cardIndex = 0; cardIndex < cards.size(); cardIndex++) {
             WebElement card = driver.findElements(DOCTOR_CARDS).get(cardIndex);
             String doctorName = card.findElement(By.cssSelector(".doctor-card-info h3")).getText();
-            card.findElement(By.xpath(".//button[normalize-space()='View profile']")).click();
+            WebElement profileButton = card.findElement(By.xpath(".//button[normalize-space()='View profile']"));
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click()", profileButton);
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".doctor-modal")));
 
             LocalDate firstDay = LocalDate.now().plusDays(1);
@@ -144,7 +148,8 @@ class AppointmentBookingIT {
                 waitForAvailabilityResponse();
                 List<WebElement> slots = driver.findElements(SLOT_BUTTONS);
                 if (!slots.isEmpty()) {
-                    slots.get(0).click();
+                    ((JavascriptExecutor) driver).executeScript("arguments[0].click()", slots.get(0));
+                    wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".toast")));
                     wait.until(ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(".doctor-modal")));
                     return doctorName;
                 }

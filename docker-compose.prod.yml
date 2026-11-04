@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-medibook}
+      POSTGRES_USER: ${POSTGRES_USER:-medibook}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the deployment environment file}
+    volumes:
+      - medibook-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-medibook} -d ${POSTGRES_DB:-medibook}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    # No host port is published: the frontend Nginx proxy is the only public entry point.
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-medibook}
+      DATABASE_USER: ${POSTGRES_USER:-medibook}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the deployment environment file}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in the deployment environment file}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost}
+      CANCELLATION_HOURS: ${CANCELLATION_HOURS:-24}
+      TIMEZONE: ${TIMEZONE:-Asia/Kolkata}
+      EMAIL_ENABLED: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_TIMEZONE: ${TIMEZONE:-Asia/Kolkata}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  medibook-db:
+    name: medibook-db
