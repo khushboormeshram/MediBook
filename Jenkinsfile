@@ -258,7 +258,7 @@ pipeline {
                     // Read the persisted output at workspace scope. Assigning env inside
                     // withCredentials/dir did not survive into the deployment stage.
                     env.MEDIBOOK_SERVER_IP = readFile('terraform/public_ip.txt').trim()
-                    if (-not env.MEDIBOOK_SERVER_IP) {
+                    if (!env.MEDIBOOK_SERVER_IP) {
                         error 'Terraform did not expose a public IP for deployment.'
                     }
                     echo "Deployment target: ${env.MEDIBOOK_SERVER_IP}"
