@@ -12,6 +12,8 @@ pipeline {
         PATH = "C:\\Teraform;C:\\apache-maven-3.9.11\\bin;C:\\Program Files\\Java\\jdk-25.0.4\\bin;C:\\Program Files\\nodejs;C:\\Program Files\\Amazon\\AWSCLIV2;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32\\OpenSSH;${env.PATH}"
         JAVA_HOME = 'C:\\Program Files\\Java\\jdk-25.0.4'
         MAVEN_HOME = 'C:\\apache-maven-3.9.11'
+        MAVEN_OPTS = '-Dmaven.repo.local=C:\\Users\\khushboo\\.m2\\repository'
+        NPM_CONFIG_CACHE = 'C:\\Users\\khushboo\\AppData\\Local\\npm-cache'
         DOCKER_HOST = 'npipe:////./pipe/docker_engine'
         AWS_DEFAULT_REGION = 'ap-south-1'
         AWS_EC2_METADATA_DISABLED = 'true'
