@@ -7,14 +7,6 @@ pipeline {
         timestamps()
     }
 
-    parameters {
-        string(
-            name: 'SSH_CIDR',
-            defaultValue: '',
-            description: 'CIDR allowed to SSH to the provisioned EC2 host, for example 203.0.113.10/32. Leave blank to create no SSH ingress rule.'
-        )
-    }
-
     environment {
         // The PATH intentionally includes the actual local tool locations used by this project.
         PATH = "C:\\Teraform;C:\\apache-maven-3.9.11\\bin;C:\\Program Files\\Java\\jdk-25.0.4\\bin;C:\\Program Files\\nodejs;C:\\Program Files\\Amazon\\AWSCLIV2;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32\\OpenSSH;${env.PATH}"
@@ -197,16 +189,14 @@ pipeline {
                 echo '=== Stage 9: Terraform Plan (dry run, no infrastructure created) ==='
                 withCredentials([
                     string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
-                    string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
+                    string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY'),
+                    string(credentialsId: 'medibook-ssh-cidr', variable: 'MEDIBOOK_SSH_CIDR')
                 ]) {
                     dir('terraform') {
                         powershell(script: '''
                             $ErrorActionPreference = 'Stop'
-                            if ($env:SSH_CIDR) {
-                                $env:TF_VAR_trusted_ssh_cidr = "[`"$env:SSH_CIDR`"]"
-                            } else {
-                                $env:TF_VAR_trusted_ssh_cidr = '[]'
-                            }
+                            if (-not $env:MEDIBOOK_SSH_CIDR) { throw 'medibook-ssh-cidr credential is empty.' }
+                            $env:TF_VAR_trusted_ssh_cidr = "[`"$env:MEDIBOOK_SSH_CIDR`"]"
 
                             Write-Host 'Confirming AWS identity for the selected account...'
                             aws sts get-caller-identity
@@ -240,16 +230,14 @@ pipeline {
                 echo '=== Stage 11: Terraform Apply (approved infrastructure provisioning) ==='
                 withCredentials([
                     string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
-                    string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
+                    string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY'),
+                    string(credentialsId: 'medibook-ssh-cidr', variable: 'MEDIBOOK_SSH_CIDR')
                 ]) {
                     dir('terraform') {
                         powershell(script: '''
                             $ErrorActionPreference = 'Stop'
-                            if ($env:SSH_CIDR) {
-                                $env:TF_VAR_trusted_ssh_cidr = "[`"$env:SSH_CIDR`"]"
-                            } else {
-                                $env:TF_VAR_trusted_ssh_cidr = '[]'
-                            }
+                            if (-not $env:MEDIBOOK_SSH_CIDR) { throw 'medibook-ssh-cidr credential is empty.' }
+                            $env:TF_VAR_trusted_ssh_cidr = "[`"$env:MEDIBOOK_SSH_CIDR`"]"
 
                             Write-Host 'Applying the reviewed Terraform plan...'
                             terraform apply -input=false tfplan
